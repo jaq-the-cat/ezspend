@@ -93,6 +93,13 @@ class _InputPageState extends State<InputPage> {
                   });
                 }
               }),
+              /*const SizedBox(width: 15),*/
+              /*CircleButton(Icons.currency_exchange, onPressed: () async {*/
+                /*final result = await showDialog<bool>(context: context, builder: (context) => const ExchangeEdit());*/
+                /*if (result == true) {*/
+                  /*setState(() {});*/
+                /*}*/
+              /*}),*/
             ],
           ),
         ],
@@ -101,3 +108,55 @@ class _InputPageState extends State<InputPage> {
   }
 }
 
+class ExchangeEdit extends StatefulWidget {
+  const ExchangeEdit({super.key});
+
+  @override
+  State<ExchangeEdit> createState() => _ExchangeEditState();
+}
+
+class _ExchangeEditState extends State<ExchangeEdit> {
+
+  Widget rateItem(String key, num value) {
+    return Row(children: [
+      Text(key), Text("$value"),
+    ]);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      insetPadding: const EdgeInsets.all(16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: 50,
+              maxHeight: 250,
+            ),
+            child: ListView(
+              shrinkWrap: true,
+              children: List<Widget>.from(Global.converter!.dollarRates.entries.map((entry) {
+                return rateItem(entry.key, entry.value);
+              })),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: TextButton(
+              child: const Padding(
+                padding: EdgeInsets.all(8),
+                child: Text("Close"),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              }
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

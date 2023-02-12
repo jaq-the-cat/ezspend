@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
-Future<T?> pickFromList<T>(BuildContext context, List<T> list, {Widget Function(BuildContext context, T item)? itemBuilder}) async {
+Future<T?> pickFromList<T>(
+BuildContext context,
+List<T> list, {
+Widget Function(BuildContext context, T item)? itemBuilder
+}) async {
   return showDialog<T>(context: context, builder: (context) {
     return Dialog(
       insetPadding: const EdgeInsets.all(16),
