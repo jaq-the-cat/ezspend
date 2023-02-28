@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 Widget loadFuture<T>({
   required Future<T> future,
-  required Widget Function (BuildContext context, T? data) builder,
+  Widget Function(BuildContext context, T? data)? builder,
+  void Function(T? data)? onComplete,
   Widget? loading,
   Widget? noData,
 }) {
@@ -15,7 +16,13 @@ Widget loadFuture<T>({
       if (noData != null && !snapshot.hasData) {
         return noData;
       }
-      return builder(context, snapshot.data);
+      if (builder != null) {
+        return builder(context, snapshot.data);
+      }
+      if (onComplete != null) {
+        onComplete(snapshot.data);
+      }
+      return const Text("we shouldnt be here");
     }
   );
 }

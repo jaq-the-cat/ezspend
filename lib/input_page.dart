@@ -1,4 +1,6 @@
+import 'package:ezspend/widgets/load_future.dart';
 import 'package:flutter/material.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'widgets/sum_viewer.dart';
 import 'widgets/currency_input.dart';
 import 'widgets/circle_btn.dart';
@@ -93,13 +95,15 @@ class _InputPageState extends State<InputPage> {
                   });
                 }
               }),
-              /*const SizedBox(width: 15),*/
-              /*CircleButton(Icons.currency_exchange, onPressed: () async {*/
-                /*final result = await showDialog<bool>(context: context, builder: (context) => const ExchangeEdit());*/
-                /*if (result == true) {*/
-                  /*setState(() {});*/
-                /*}*/
-              /*}),*/
+              const SizedBox(width: 15),
+              CircleButton(Icons.currency_exchange, onPressed: () async {
+                final result = await showDialog<bool>(context: context, builder: (context) => ExchangeEdit(
+                  updated: () { setState(() {}); },
+                ));
+                if (result == true) {
+                  setState(() {});
+                }
+              }),
             ],
           ),
         ],
@@ -109,7 +113,8 @@ class _InputPageState extends State<InputPage> {
 }
 
 class ExchangeEdit extends StatefulWidget {
-  const ExchangeEdit({super.key});
+  final VoidCallback? updated;
+  const ExchangeEdit({super.key, this.updated});
 
   @override
   State<ExchangeEdit> createState() => _ExchangeEditState();
@@ -117,10 +122,28 @@ class ExchangeEdit extends StatefulWidget {
 
 class _ExchangeEditState extends State<ExchangeEdit> {
 
-  Widget rateItem(String key, num value) {
-    return Row(children: [
-      Text(key), Text("$value"),
-    ]);
+  Widget rateItem(BuildContext context, String code, num value, void Function(String, num) onSubmit) {
+    final controller = TextEditingController(text: value.toString());
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: Row(children: [
+        SizedBox(
+          width: 45,
+          child: Text(code, style: TextStyle(
+            color: Theme.of(context).colorScheme.primary,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          )),
+        ),
+        Expanded(
+          child: TextFormField(controller: controller, decoration: const InputDecoration(border: OutlineInputBorder())),
+        ),
+        IconButton(icon: const Icon(Icons.check), onPressed: () {
+          final n = num.tryParse(controller.text);
+          if (n != null) onSubmit(code, n);
+        }),
+      ]),
+    );
   }
 
   @override
@@ -138,22 +161,58 @@ class _ExchangeEditState extends State<ExchangeEdit> {
             ),
             child: ListView(
               shrinkWrap: true,
-              children: List<Widget>.from(Global.converter!.dollarRates.entries.map((entry) {
-                return rateItem(entry.key, entry.value);
+              children: List<Widget>.from(Global.converter!.dollarRates.entries
+                .where((entry) => entry.key != "USD")
+                .map((entry) {
+                return rateItem(context, entry.key, entry.value, (code, value) {
+                  setState(() {
+                    Global.converter!.dollarRates[code] = value;
+                  });
+                  if (widget.updated != null) widget.updated!();
+                });
               })),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: TextButton(
-              child: const Padding(
-                padding: EdgeInsets.all(8),
-                child: Text("Close"),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 8, bottom: 8),
+                child: TextButton(
+                  child: const Padding(
+                    padding: EdgeInsets.all(8),
+                    child: Text("Reload"),
+                  ),
+                  onPressed: () async {
+                    showDialog(context: context, builder: (context) => Dialog(
+                      child: SizedBox(
+                        height: 75,
+                        child: LoadingAnimationWidget.beat(
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 32,
+                        ),
+                      ),
+                    ));
+                    Global.converter!.refreshRates().whenComplete(() {
+                      Navigator.of(context).pop();
+                      setState(() {});
+                    });
+                  }
+                ),
               ),
-              onPressed: () {
-                Navigator.of(context).pop();
-              }
-            ),
+              Padding(
+                padding: const EdgeInsets.all(8),
+                child: TextButton(
+                  child: const Padding(
+                    padding: EdgeInsets.all(8),
+                    child: Text("Close"),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  }
+                ),
+              ),
+            ],
           ),
         ],
       ),

@@ -3,21 +3,19 @@ import 'package:http/http.dart' as http;
 
 class Converter {
   static const url = "https://api.freecurrencyapi.com/v1/latest?apikey=Y0oR9YdRRur7iP5sptKj5ZhQg8uoLElWyOvUnf5l";
-  final Map<String, num> dollarRates;
+  Map<String, num> _dollarRates;
+  Map<String, num> get dollarRates => _dollarRates;
 
-  Converter(this.dollarRates);
-  static Future<Converter> init() async {
-    return Converter(await getRates());
+  Converter(this._dollarRates);
+  static Future<Converter> init([Map<String, num>? dollarRates]) async {
+    return Converter(dollarRates ?? await getRates());
   }
 
   static Future<Map<String, num>> getRates() async {
-    /*final resp = await http.get(Uri.parse(url));*/
-    /*if (resp.statusCode != 200) return null;*/
-    /*final toDollars =  jsonDecode(resp.body)["data"];*/
-    final toDollars = {
+    final fallback = {
       "AUD": 1.441127,
       "BGN": 1.81939,
-      "BRL": 5.29101,
+      "BRL": 5.17,
       "CAD": 1.344937,
       "CHF": 0.9221,
       "CNY": 6.780708,
@@ -48,7 +46,15 @@ class Converter {
       "USD": 1,
       "ZAR": 17.755632
     };
+    final resp = await http.get(Uri.parse(url));
+    if (resp.statusCode != 200) return fallback;
+    final toDollars =  jsonDecode(resp.body)["data"];
     return toDollars;
+  }
+
+  Future<void> refreshRates() async {
+    _dollarRates = await getRates();
+    await Future.delayed(const Duration(seconds: 1));
   }
 
   num? fromTo(String xCode, num x, String yCode) {
